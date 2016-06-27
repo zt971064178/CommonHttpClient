@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug" strict="true" name="youapp-log4j2"
+	packages="j.jave.kernal.jave">
+	<Properties>
+		<Property name="rolllogDir">d:/koala/log</Property>
+		<Property name="rolllogRollingFile">corp-web.log</Property>
+	</Properties>
+	<Appenders>
+		<Appender type="Console" name="appConsole">
+			<Layout type="PatternLayout" pattern="%d %p  %c [%t] %m %n" />
+		</Appender>
+
+		<RollingFile name="rollingFile" fileName="${rolllogDir}/${rolllogRollingFile}"
+			append="true"
+			filePattern="${rolllogDir}/$${date:yyyy-MM}/tech-market-%d{MM-dd-yyyy}-%i.log">
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd 'at' HH:mm:ss z} %-5level %class{36} %L %M - %msg%xEx%n" />
+			<SizeBasedTriggeringPolicy size="5 MB" />
+		</RollingFile>
+	</Appenders>
+
+	<Loggers>
+		<Logger name="com.kcfy" level="DEBUG" additivity="false">
+			<AppenderRef ref="rollingFile" />
+			<AppenderRef ref="appConsole" />
+		</Logger>
+	</Loggers>
+
+</Configuration>
