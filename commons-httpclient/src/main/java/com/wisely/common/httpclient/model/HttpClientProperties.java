@@ -18,22 +18,22 @@ public class HttpClientProperties {
 	@Value("${httpClient.validateAfterInactivity}")
 	private int validateAfterInactivity ;
 	@Value("${httpClient.isRetryConnection}")
-	private boolean isRetryConnection ;// 是否开启断线重连开关
+	private boolean retryConnection ;// 是否开启断线重连开关
 
 	public int getValidateAfterInactivity() {
 		return validateAfterInactivity;
 	}
 
+	public boolean isRetryConnection() {
+		return retryConnection;
+	}
+
+	public void setRetryConnection(boolean retryConnection) {
+		this.retryConnection = retryConnection;
+	}
+
 	public void setValidateAfterInactivity(int validateAfterInactivity) {
 		this.validateAfterInactivity = validateAfterInactivity;
-	}
-
-	public boolean isRetryConnection() {
-		return isRetryConnection;
-	}
-
-	public void setRetryConnection(boolean isRetryConnection) {
-		this.isRetryConnection = isRetryConnection;
 	}
 
 	public void setMaxTotal(int maxTotal) {
