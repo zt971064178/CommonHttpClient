@@ -38,9 +38,17 @@ public class HttpClientManager {
 		httpClientProperties = (HttpClientProperties) PropertyLoader.loadProperty(HttpClientProperties.class) ;
 		
 		// 连接池配置
-		httpClientConnectionManager.setMaxTotal(httpClientProperties.getMaxTotal());
-		httpClientConnectionManager.setDefaultMaxPerRoute(httpClientProperties.getDefaultMaxPerRoute());
-		httpClientConnectionManager.setValidateAfterInactivity(httpClientProperties.getValidateAfterInactivity());
+		if(httpClientProperties.getMaxTotal() != 0) {
+			httpClientConnectionManager.setMaxTotal(httpClientProperties.getMaxTotal());
+		}
+		
+		if(httpClientProperties.getDefaultMaxPerRoute() != 0) {
+			httpClientConnectionManager.setDefaultMaxPerRoute(httpClientProperties.getDefaultMaxPerRoute());
+		}
+		
+		if(httpClientProperties.getValidateAfterInactivity() != 0) {
+			httpClientConnectionManager.setValidateAfterInactivity(httpClientProperties.getValidateAfterInactivity());
+		}
 	}
 	
 	private HttpClientManager() {
@@ -76,9 +84,17 @@ public class HttpClientManager {
 	
 	private static final Builder getBuilder() {
 		RequestConfig.Builder builder = RequestConfig.custom() ;
-		builder.setConnectTimeout(httpClientProperties.getConnectTimeout()) ;
-		builder.setConnectionRequestTimeout(httpClientProperties.getConnectionRequestTimeout()) ;
-		builder.setSocketTimeout(httpClientProperties.getSocketTimeout()) ;
+		if(httpClientProperties.getConnectTimeout() != 0) {
+			builder.setConnectTimeout(httpClientProperties.getConnectTimeout()) ;
+		}
+		
+		if(httpClientProperties.getConnectionRequestTimeout() != 0) {
+			builder.setConnectionRequestTimeout(httpClientProperties.getConnectionRequestTimeout()) ;
+		}
+		
+		if(httpClientProperties.getSocketTimeout() != 0) {
+			builder.setSocketTimeout(httpClientProperties.getSocketTimeout()) ;
+		}
 		return builder ;
 	}
 	
