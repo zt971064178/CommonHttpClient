@@ -22,7 +22,25 @@ import org.apache.http.util.EntityUtils;
 
 import com.wisely.common.httpclient.model.HttpResult;
 
+/**
+ * HttpClient调用客户端
+ */
 public class HttpClientComponent {
+	
+	private HttpClientComponent() {
+		// 初试加载启动线程，清除无效链接
+		new IdleConnectionEvictor(HttpClientManager.httpClientConnectionManager).executeClearIdleConnection() ;
+	}
+	
+	// 静态内部类创建单例  线程安全
+	private static class SingletonHolder {
+		private final static HttpClientComponent INSTANCE = new HttpClientComponent();
+    }
+	
+	// 获取实例
+	public static final HttpClientComponent getInstance() {
+		return SingletonHolder.INSTANCE;
+	}
 	
 	// =========================== Get请求  ===========================
 	/**

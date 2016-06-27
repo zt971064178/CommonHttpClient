@@ -1,5 +1,8 @@
 package com.wisely.common.httpclient;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.apache.http.conn.HttpClientConnectionManager;
 
 /**
@@ -10,31 +13,34 @@ import org.apache.http.conn.HttpClientConnectionManager;
  */
 public class IdleConnectionEvictor extends Thread {
 
+	private ExecutorService executorService = Executors.newSingleThreadExecutor();
 	private final HttpClientConnectionManager connMgr;
-
 	private volatile boolean shutdown;
 
 	public IdleConnectionEvictor(HttpClientConnectionManager connMgr) {
 		this.connMgr = connMgr;
-		// 启动当前线程
-		this.start();
 	}
-
-	@Override
-	public void run() {
-		System.out.println("清除连接...");
-		try {
-			while (!shutdown) {
-				synchronized (this) {
-					wait(5000);
-					// 关闭失效的连接
-					connMgr.closeExpiredConnections();
+	
+	public void executeClearIdleConnection() {
+		// 启动当前线程
+		executorService.execute(new Runnable() {
+			@Override
+			public void run() {
+				System.out.println("清除连接...");
+				try {
+					while (!shutdown) {
+						synchronized (this) {
+							wait(5000);
+							// 关闭失效的连接
+							connMgr.closeExpiredConnections();
+						}
+					}
+				} catch (InterruptedException ex) {
+					// 结束
+					ex.printStackTrace();
 				}
 			}
-		} catch (InterruptedException ex) {
-			// 结束
-			ex.printStackTrace();
-		}
+		});
 	}
 
 	public void shutdown() {

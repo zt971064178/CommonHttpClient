@@ -3,8 +3,8 @@ package com.wisely.common.httpclient.test;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Test;
 
+import com.wisely.common.httpclient.HttpClientComponent;
 import com.wisely.common.httpclient.HttpClientManager;
-import com.wisely.common.httpclient.IdleConnectionEvictor;
 
 public class HttpClientTest {
 
@@ -15,6 +15,6 @@ public class HttpClientTest {
 	}
 	
 	public static void main(String[] args) {
-		new IdleConnectionEvictor(HttpClientManager.httpClientConnectionManager).run();
+		HttpClientComponent.getInstance() ;
 	}
 }
