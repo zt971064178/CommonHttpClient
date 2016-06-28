@@ -1,11 +1,17 @@
 package com.wisely.common.httpclient;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.http.Consts;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -17,6 +23,9 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
@@ -50,7 +59,7 @@ public class HttpClientComponent {
 	 * @throws IOException
 	 * @throws ClientProtocolException
 	 */
-	public String doGet(String url, Map<String, String> headers) throws ClientProtocolException, IOException {
+	public HttpResult doGet(String url, Map<String, String> headers) throws ClientProtocolException, IOException {
 		// 创建http GET请求
 		HttpGet httpGet = new HttpGet(url);
 		httpGet.setConfig(HttpClientManager.getRequestConfig());
@@ -65,16 +74,12 @@ public class HttpClientComponent {
 		try {
 			// 执行请求
 			response = HttpClientManager.createCloseableHttpClient().execute(httpGet);
-			// 判断返回状态是否为200
-			if (response.getStatusLine().getStatusCode() == 200) {
-				return EntityUtils.toString(response.getEntity(), "UTF-8");
-			}
+			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
 			if (response != null) {
 				response.close();
 			}
 		}
-		return null;
 	}
 
 	/**
@@ -86,7 +91,7 @@ public class HttpClientComponent {
 	 * @throws IOException
 	 * @throws ClientProtocolException
 	 */
-	public String doGet(String url, Map<String, String> params, Map<String, String> headers)
+	public HttpResult doGet(String url, Map<String, String> params, Map<String, String> headers)
 			throws ClientProtocolException, IOException, URISyntaxException {
 		URIBuilder uriBuilder = new URIBuilder(url);
 		for (String key : params.keySet()) {
@@ -107,11 +112,11 @@ public class HttpClientComponent {
 		// 创建http POST请求
 		HttpPost httpPost = new HttpPost(url);
 		httpPost.setConfig(HttpClientManager.getRequestConfig());
+		httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
 		// 构造头部信息
 		if(headers != null) {
 			for(Map.Entry<String, String> header : headers.entrySet()) {
 				httpPost.setHeader(header.getKey(), header.getValue());
-				//httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
 				//httpPost.setHeader("Authorization", "Bearer "+token);
 				//httpPost.setHeader("Accept", "application/json");
 			}
@@ -227,11 +232,11 @@ public class HttpClientComponent {
 		// 创建http Put请求
 		HttpPut httpPut = new HttpPut(url) ;
 		httpPut.setConfig(HttpClientManager.getRequestConfig());
+		httpPut.setHeader("Content-Type", "application/x-www-form-urlencoded");
 		// 构造头部信息
 		if(headers != null) {
 			for(Map.Entry<String, String> header : headers.entrySet()) {
 				httpPut.setHeader(header.getKey(), header.getValue());
-				//httpPost.setHeader("Content-Type", "application/x-www-form-urlencoded");
 				//httpPost.setHeader("Authorization", "Bearer "+token);
 				//httpPost.setHeader("Accept", "application/json");
 			}
@@ -321,7 +326,7 @@ public class HttpClientComponent {
 	 *  @throws ClientProtocolException
 	 *  @throws IOException
 	 */
-	public String doDelete(String url, Map<String, String> headers) throws ClientProtocolException, IOException {
+	public HttpResult doDelete(String url, Map<String, String> headers) throws ClientProtocolException, IOException {
 		// 创建http GET请求
 		HttpDelete httpDelete = new HttpDelete(url);
 		httpDelete.setConfig(HttpClientManager.getRequestConfig());
@@ -336,16 +341,12 @@ public class HttpClientComponent {
 		try {
 			// 执行请求
 			response = HttpClientManager.createCloseableHttpClient().execute(httpDelete);
-			// 判断返回状态是否为200
-			if (response.getStatusLine().getStatusCode() == 200) {
-				return EntityUtils.toString(response.getEntity(), "UTF-8");
-			}
+			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
 			if (response != null) {
 				response.close();
 			}
 		}
-		return null;
 	}
 	
 	/**
@@ -360,12 +361,114 @@ public class HttpClientComponent {
 	 *  @throws IOException
 	 *  @throws URISyntaxException
 	 */
-	public String doDelete(String url, Map<String, String> params, Map<String, String> headers)
+	public HttpResult doDelete(String url, Map<String, String> params, Map<String, String> headers)
 			throws ClientProtocolException, IOException, URISyntaxException {
 		URIBuilder uriBuilder = new URIBuilder(url);
 		for (String key : params.keySet()) {
 			uriBuilder.addParameter(key, params.get(key));
 		}
 		return this.doDelete(uriBuilder.build().toString(), headers);
+	}
+	
+	/**
+	 *  doUpload:(文件上传). 
+	 *  @return_type:HttpResult
+	 *  @author zhangtian 
+	 *  @param url
+	 *  @param localFile
+	 *  @param params
+	 *  @return
+	 *  @throws IOException
+	 */
+	public HttpResult doUpload(String url, String uploadFile, String uploadFileName, Map<String, String> params) throws IOException{
+		HttpPost httpPost = new HttpPost(url) ;
+		httpPost.setConfig(HttpClientManager.getRequestConfig());
+		// 把文件转换成流对象FileBody
+		FileBody fileBody = null ;
+		if(uploadFileName == null || "".equals(uploadFileName)) {
+			fileBody = new FileBody(new File(uploadFile), ContentType.MULTIPART_FORM_DATA) ;
+		} else {
+			fileBody = new FileBody(new File(uploadFile), ContentType.MULTIPART_FORM_DATA, uploadFileName) ;
+		}
+		
+		MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create() ;
+		// 相当于<input type="file" name="file"/>
+		multipartEntityBuilder.addPart("file", fileBody) ;
+		
+		if(params != null) {
+			for(Map.Entry<String, String> par : params.entrySet()) {
+				// 相当于<input type="text" name="userName" value=userName>
+				multipartEntityBuilder.addPart(par.getKey(), new StringBody(par.getValue(), ContentType.create("text/plain", Consts.UTF_8))) ;
+			}
+		}
+		HttpEntity httpEntity = multipartEntityBuilder.build() ;
+		
+		httpPost.setEntity(httpEntity);
+		
+		// 发起请求 并返回请求的响应
+		CloseableHttpResponse response = null;
+		HttpEntity resEntity = null ;
+		try {
+			// 执行请求
+			response = HttpClientManager.createCloseableHttpClient().execute(httpPost);
+			// 获取响应对象
+			resEntity = response.getEntity();
+			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity, Charset.forName("UTF-8"))) ;
+		} finally {
+			if (response != null) {
+				response.close();
+			}
+			
+			// 销毁
+			if(resEntity != null) {
+				EntityUtils.consume(resEntity);
+			}
+		}
+	}
+	
+	/**
+	 *  doDownload:(HttpClient文件下载). 
+	 *  @return_type:HttpResult
+	 *  @author zhangtian 
+	 *  @param url
+	 *  @param headers
+	 *  @param remoteFileName
+	 *  @param localFileName
+	 *  @return
+	 *  @throws IOException
+	 */
+	public InputStream doDownload(String url, Map<String, String> headers) throws IOException {
+		InputStream in = null;
+		
+		HttpGet httpGet = new HttpGet(url);
+		httpGet.setConfig(HttpClientManager.getRequestConfig());
+		/*
+		 * httpGet.addHeader("userName", userName);
+		   httpGet.addHeader("passwd", passwd);
+	       httpGet.addHeader("fileName", remoteFileName);
+		 */
+		// 构造头部信息
+		if(headers != null) {
+			for(Map.Entry<String, String> header : headers.entrySet()) {
+				httpGet.setHeader(header.getKey(), header.getValue());
+			}
+		}
+		
+		try {
+			HttpResponse httpResponse = HttpClientManager.createCloseableHttpClient().execute(httpGet);
+			HttpEntity httpEntity = httpResponse.getEntity();
+			in = httpEntity.getContent();
+			
+			long length = httpEntity.getContentLength();
+			if (length <= 0) {
+				throw new RuntimeException("文件不存在......") ;
+			}
+			
+			return in;
+		} finally {
+			if(in != null) {
+				in.close();
+			}
+		}
 	}
 }
