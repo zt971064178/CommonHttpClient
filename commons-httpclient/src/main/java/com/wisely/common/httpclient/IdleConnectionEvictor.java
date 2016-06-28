@@ -11,7 +11,7 @@ import org.apache.http.conn.HttpClientConnectionManager;
  * @author zhangtian  
  * @version
  */
-public class IdleConnectionEvictor extends Thread {
+public class IdleConnectionEvictor {
 
 	private ExecutorService executorService = Executors.newSingleThreadExecutor();
 	private final HttpClientConnectionManager connMgr;
