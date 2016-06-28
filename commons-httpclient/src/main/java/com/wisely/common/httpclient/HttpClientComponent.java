@@ -215,7 +215,7 @@ public class HttpClientComponent {
 	 *  @throws IOException
 	 */
 	public HttpResult doPut(String url, Map<String, String> headers) throws IOException {
-		return this.doPost(url, null, headers);
+		return this.doPut(url, null, headers);
 	}
 	
 	/**
