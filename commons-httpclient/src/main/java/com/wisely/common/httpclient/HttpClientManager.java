@@ -3,9 +3,16 @@ package com.wisely.common.httpclient;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
@@ -15,13 +22,18 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.ssl.SSLContextBuilder;
 
+import com.wisely.common.httpclient.constant.RequestType;
 import com.wisely.common.httpclient.loader.PropertyLoader;
-import com.wisely.common.httpclient.model.HttpClientProperties;
+import com.wisely.common.httpclient.model.HttpClientProperties;  
 
 /**
  * ClassName: HttpClientManager  
@@ -61,14 +73,14 @@ public class HttpClientManager {
 	 *  @author zhangtian 
 	 *  @return
 	 */
-	private static final HttpClientBuilder getHttpClientBuilder(int retryTime) {
+	private static final HttpClientBuilder getHttpClientBuilder(RequestType requestType, int retryTime) {
 		HttpClientBuilder httpClientBuilder = HttpClientBuilder.create() ;
 		httpClientBuilder.setConnectionManager(httpClientConnectionManager) ;
 		// 是否开启断线重连开关
 		if(httpClientProperties.isRetryConnection() && retryTime > 0) {
 			httpClientBuilder.setRetryHandler(retryHttpRequestRetryHandler(retryTime)) ;
 		}
-		return httpClientBuilder ;
+		return RequestType.HTTP.equals(requestType) ? httpClientBuilder : httpClientBuilder.setSSLSocketFactory(createSSLConnSocketFactory()) ;
 	}
 	
 	/**
@@ -78,8 +90,8 @@ public class HttpClientManager {
 	 *  @author zhangtian 
 	 *  @return
 	 */
-	public static final CloseableHttpClient createCloseableHttpClient(int retryTime) {
-		return getHttpClientBuilder(retryTime).build() ;
+	public static final CloseableHttpClient createCloseableHttpClient(RequestType requestType, int retryTime) {
+		return getHttpClientBuilder(requestType, retryTime).build() ;
 	}
 	
 	private static final Builder getBuilder() {
@@ -95,6 +107,9 @@ public class HttpClientManager {
 		if(httpClientProperties.getSocketTimeout() != 0) {
 			builder.setSocketTimeout(httpClientProperties.getSocketTimeout()) ;
 		}
+		
+		// 设置全局的标准cookie策略
+		// builder.setCookieSpec(CookieSpecs.STANDARD_STRICT) ;
 		return builder ;
 	}
 	
@@ -151,5 +166,62 @@ public class HttpClientManager {
 				return false;
 			}
 		};
+	}
+	
+	/** 
+     * 创建SSL安全连接 
+     * @return 
+     */  
+	private static SSLConnectionSocketFactory createSSLConnSocketFactory() {
+		SSLConnectionSocketFactory sslsf = null; 
+		try {
+			// 忽略证书认证
+			SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy(){
+				@Override
+				public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+					 return true;  
+				}
+			}).build() ;
+			
+			sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE) ;
+		} catch (GeneralSecurityException e) {
+			e.printStackTrace();  
+		}
+		
+		return sslsf ;
+	}
+	
+	/** 
+     * 创建SSL安全连接 
+     * @return 
+     */  
+	private static SSLConnectionSocketFactory createSSLConnSocketFactory1() {
+		// 私密连接工厂
+		SSLConnectionSocketFactory sslsf = null; 
+		// 忽略证书认证
+		try {
+			X509TrustManager tm = new X509TrustManager() {
+				@Override
+				public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+				}
+
+				@Override
+				public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+				}
+
+				@Override
+				public X509Certificate[] getAcceptedIssuers() {
+					return null;
+				}
+			};
+			
+			// 忽略证书认证
+			SSLContext sslContext = SSLContext.getInstance("TLS");
+			sslContext.init(null, new TrustManager[] { tm }, new SecureRandom());
+			sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE) ;
+		} catch (GeneralSecurityException e) {
+			e.printStackTrace();  
+		}
+		return sslsf ;
 	}
 }

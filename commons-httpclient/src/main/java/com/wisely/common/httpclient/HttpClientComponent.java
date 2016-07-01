@@ -29,6 +29,7 @@ import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import com.wisely.common.httpclient.constant.RequestType;
 import com.wisely.common.httpclient.model.HttpResult;
 
 /**
@@ -36,19 +37,28 @@ import com.wisely.common.httpclient.model.HttpResult;
  */
 public class HttpClientComponent {
 	
-	private HttpClientComponent() {
+	private RequestType requestType ;
+	
+	private HttpClientComponent(RequestType requestType) {
+		this.requestType = requestType ;
 		// 初试加载启动线程，清除无效链接
 		new IdleConnectionEvictor(HttpClientManager.httpClientConnectionManager).executeClearIdleConnection() ;
 	}
 	
 	// 静态内部类创建单例  线程安全
-	private static class SingletonHolder {
-		private final static HttpClientComponent INSTANCE = new HttpClientComponent();
+	private static class SingletonHTTPHolder {
+		private final static HttpClientComponent INSTANCE = new HttpClientComponent(RequestType.HTTP);
     }
+
+	// 静态内部类创建单例  线程安全
+	private static class SingletonHTTPSHolder {
+		private final static HttpClientComponent INSTANCE = new HttpClientComponent(RequestType.HTTPS);
+	}
 	
 	// 获取实例
-	public static final HttpClientComponent getInstance() {
-		return SingletonHolder.INSTANCE;
+	public static final HttpClientComponent getInstance(RequestType requestType){
+		
+		return requestType.equals(RequestType.HTTP) ? SingletonHTTPHolder.INSTANCE : SingletonHTTPSHolder.INSTANCE ;
 	}
 	
 	// =========================== Get请求  ===========================
@@ -74,7 +84,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpGet);
+			response = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpGet);
 			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
 			if (response != null) {
@@ -139,7 +149,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
+			response = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpPost);
 			return new HttpResult(response.getStatusLine().getStatusCode(),
 					EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
@@ -199,7 +209,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
+			response = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpPost);
 			return new HttpResult(response.getStatusLine().getStatusCode(),
 					EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
@@ -264,7 +274,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPut);
+			response = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpPut);
 			return new HttpResult(response.getStatusLine().getStatusCode(),
 					EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
@@ -313,7 +323,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPut);
+			response = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpPut);
 			return new HttpResult(response.getStatusLine().getStatusCode(),
 					EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
@@ -349,7 +359,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpDelete);
+			response = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpDelete);
 			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
 			if (response != null) {
@@ -421,7 +431,7 @@ public class HttpClientComponent {
 		HttpEntity resEntity = null ;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
+			response = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpPost);
 			// 获取响应对象
 			resEntity = response.getEntity();
 			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity, Charset.forName("UTF-8"))) ;
@@ -467,7 +477,7 @@ public class HttpClientComponent {
 		}
 		
 		try {
-			HttpResponse httpResponse = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpGet);
+			HttpResponse httpResponse = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpGet);
 			HttpEntity httpEntity = httpResponse.getEntity();
 			in = httpEntity.getContent();
 			
