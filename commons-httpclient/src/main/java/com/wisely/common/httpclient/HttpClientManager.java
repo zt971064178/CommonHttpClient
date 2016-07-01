@@ -61,12 +61,12 @@ public class HttpClientManager {
 	 *  @author zhangtian 
 	 *  @return
 	 */
-	private static final HttpClientBuilder getHttpClientBuilder() {
+	private static final HttpClientBuilder getHttpClientBuilder(int retryTime) {
 		HttpClientBuilder httpClientBuilder = HttpClientBuilder.create() ;
 		httpClientBuilder.setConnectionManager(httpClientConnectionManager) ;
 		// 是否开启断线重连开关
-		if(httpClientProperties.isRetryConnection()) {
-			httpClientBuilder.setRetryHandler(retryHttpRequestRetryHandler()) ;
+		if(httpClientProperties.isRetryConnection() && retryTime > 0) {
+			httpClientBuilder.setRetryHandler(retryHttpRequestRetryHandler(retryTime)) ;
 		}
 		return httpClientBuilder ;
 	}
@@ -78,8 +78,8 @@ public class HttpClientManager {
 	 *  @author zhangtian 
 	 *  @return
 	 */
-	public static final CloseableHttpClient createCloseableHttpClient() {
-		return getHttpClientBuilder().build() ;
+	public static final CloseableHttpClient createCloseableHttpClient(int retryTime) {
+		return getHttpClientBuilder(retryTime).build() ;
 	}
 	
 	private static final Builder getBuilder() {
@@ -109,11 +109,11 @@ public class HttpClientManager {
 		return requestConfig ;
 	}
 	
-	private static HttpRequestRetryHandler retryHttpRequestRetryHandler() {
+	private static HttpRequestRetryHandler retryHttpRequestRetryHandler(final int retryTime) {
 		return new HttpRequestRetryHandler() {
 			@Override
 			public boolean retryRequest(IOException exception, int executionCount, HttpContext context) {
-				if (executionCount >= 5) {// 如果已经重试了5次，就放弃                     
+				if (executionCount >= retryTime) {// 如果已经重试了5次，就放弃                     
 					return false;  
 				}  
                 

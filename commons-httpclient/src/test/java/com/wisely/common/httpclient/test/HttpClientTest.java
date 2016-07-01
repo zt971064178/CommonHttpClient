@@ -15,7 +15,7 @@ public class HttpClientTest {
 
 	@Test
 	public void testProperties() {
-		CloseableHttpClient httpClient = HttpClientManager.createCloseableHttpClient() ;
+		CloseableHttpClient httpClient = HttpClientManager.createCloseableHttpClient(0) ;
 		System.out.println(httpClient);
 	}
 	
@@ -35,7 +35,7 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance().doGet(url, params, null) ;
+		HttpResult result = HttpClientComponent.getInstance().doGet(url, params, null,0) ;
 		System.out.println(result);
 	}
 	
@@ -51,7 +51,7 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance().doPost(url,params, null) ;
+		HttpResult result = HttpClientComponent.getInstance().doPost(url,params, null,0) ;
 		System.out.println(result);
 	}
 	
@@ -67,7 +67,7 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance().doPostJson(url,JSONObject.toJSONString(params), null) ;
+		HttpResult result = HttpClientComponent.getInstance().doPostJson(url,JSONObject.toJSONString(params), null,0) ;
 		System.out.println(result);
 	}
 	
@@ -83,7 +83,7 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance().doDelete(url, params, null) ;
+		HttpResult result = HttpClientComponent.getInstance().doDelete(url, params, null,0) ;
 		System.out.println(result);
 	}
 	
@@ -100,7 +100,7 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance().doPut(url, params, null) ;
+		HttpResult result = HttpClientComponent.getInstance().doPut(url, params, null,0) ;
 		System.out.println(result);
 	}
 }

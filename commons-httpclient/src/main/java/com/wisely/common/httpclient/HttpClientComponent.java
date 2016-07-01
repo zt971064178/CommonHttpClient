@@ -55,11 +55,12 @@ public class HttpClientComponent {
 	/**
 	 * 执行GET请求--无参数
 	 * @param url
+	 * @param retryTime 重连次数
 	 * @return
 	 * @throws IOException
 	 * @throws ClientProtocolException
 	 */
-	public HttpResult doGet(String url, Map<String, String> headers) throws ClientProtocolException, IOException {
+	public HttpResult doGet(String url, Map<String, String> headers, int retryTime) throws ClientProtocolException, IOException {
 		// 创建http GET请求
 		HttpGet httpGet = new HttpGet(url);
 		httpGet.setConfig(HttpClientManager.getRequestConfig());
@@ -73,7 +74,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient().execute(httpGet);
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpGet);
 			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
 			if (response != null) {
@@ -86,18 +87,19 @@ public class HttpClientComponent {
 	 * 带有参数的GET请求
 	 * @param url
 	 * @param params
+	 * @param retryTime 重连次数
 	 * @return
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws ClientProtocolException
 	 */
-	public HttpResult doGet(String url, Map<String, String> params, Map<String, String> headers)
+	public HttpResult doGet(String url, Map<String, String> params, Map<String, String> headers, int retryTime)
 			throws ClientProtocolException, IOException, URISyntaxException {
 		URIBuilder uriBuilder = new URIBuilder(url);
 		for (String key : params.keySet()) {
 			uriBuilder.addParameter(key, params.get(key));
 		}
-		return this.doGet(uriBuilder.build().toString(), headers);
+		return this.doGet(uriBuilder.build().toString(), headers, retryTime);
 	}
 
 	// =========================== Post请求  ===========================
@@ -105,10 +107,11 @@ public class HttpClientComponent {
 	 * 执行POST请求
 	 * @param url
 	 * @param params
+	 * @param retryTime 重连次数
 	 * @return
 	 * @throws IOException
 	 */
-	public HttpResult doPost(String url, Map<String, String> params, Map<String, String> headers) throws IOException {
+	public HttpResult doPost(String url, Map<String, String> params, Map<String, String> headers, int retryTime) throws IOException {
 		// 创建http POST请求
 		HttpPost httpPost = new HttpPost(url);
 		httpPost.setConfig(HttpClientManager.getRequestConfig());
@@ -136,7 +139,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient().execute(httpPost);
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
 			return new HttpResult(response.getStatusLine().getStatusCode(),
 					EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
@@ -149,22 +152,24 @@ public class HttpClientComponent {
 	/**
 	 * 执行POST请求--无参数
 	 * @param url
+	 * @param retryTime 重连次数
 	 * @return
 	 * @throws IOException
 	 */
-	public HttpResult doPost(String url, Map<String, String> headers) throws IOException {
-		return this.doPost(url, null, headers);
+	public HttpResult doPost(String url, Map<String, String> headers, int retryTime) throws IOException {
+		return this.doPost(url, null, headers, retryTime);
 	}
 
 	/**
 	 * 提交json数据
 	 * @param url
 	 * @param json
+	 * @param retryTime 重连次数
 	 * @return
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public HttpResult doPostJson(String url, String json, Map<String, String> headers) throws ClientProtocolException, IOException {
+	public HttpResult doPostJson(String url, String json, Map<String, String> headers, int retryTime) throws ClientProtocolException, IOException {
 		// 创建http POST请求
 		HttpPost httpPost = new HttpPost(url);
 		httpPost.setConfig(HttpClientManager.getRequestConfig());
@@ -194,7 +199,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient().execute(httpPost);
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
 			return new HttpResult(response.getStatusLine().getStatusCode(),
 					EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
@@ -211,11 +216,12 @@ public class HttpClientComponent {
 	 *  @author zhangtian 
 	 *  @param url
 	 *  @param headers
+	 *  @param retryTime 重连次数
 	 *  @return
 	 *  @throws IOException
 	 */
-	public HttpResult doPut(String url, Map<String, String> headers) throws IOException {
-		return this.doPut(url, null, headers);
+	public HttpResult doPut(String url, Map<String, String> headers, int retryTime) throws IOException {
+		return this.doPut(url, null, headers, retryTime);
 	}
 	
 	/**
@@ -225,10 +231,11 @@ public class HttpClientComponent {
 	 *  @param url
 	 *  @param params
 	 *  @param headers
+	 *  @param retryTime 重连次数
 	 *  @return
 	 *  @throws IOException
 	 */
-	public HttpResult doPut(String url, Map<String, String> params, Map<String, String> headers) throws IOException {
+	public HttpResult doPut(String url, Map<String, String> params, Map<String, String> headers, int retryTime) throws IOException {
 		// 创建http Put请求
 		HttpPut httpPut = new HttpPut(url) ;
 		httpPut.setConfig(HttpClientManager.getRequestConfig());
@@ -257,7 +264,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient().execute(httpPut);
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPut);
 			return new HttpResult(response.getStatusLine().getStatusCode(),
 					EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
@@ -274,11 +281,12 @@ public class HttpClientComponent {
 	 *  @param url
 	 *  @param json
 	 *  @param headers
+	 *  @param retryTime 重连次数
 	 *  @return
 	 *  @throws ClientProtocolException
 	 *  @throws IOException
 	 */
-	public HttpResult doPutJson(String url, String json, Map<String, String> headers) throws ClientProtocolException, IOException {
+	public HttpResult doPutJson(String url, String json, Map<String, String> headers, int retryTime) throws ClientProtocolException, IOException {
 		// 创建http POST请求
 		HttpPut httpPut = new HttpPut(url);
 		httpPut.setConfig(HttpClientManager.getRequestConfig());
@@ -305,7 +313,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient().execute(httpPut);
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPut);
 			return new HttpResult(response.getStatusLine().getStatusCode(),
 					EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
@@ -322,11 +330,12 @@ public class HttpClientComponent {
 	 *  @author zhangtian 
 	 *  @param url
 	 *  @param headers
+	 *  @param retryTime 重连次数
 	 *  @return
 	 *  @throws ClientProtocolException
 	 *  @throws IOException
 	 */
-	public HttpResult doDelete(String url, Map<String, String> headers) throws ClientProtocolException, IOException {
+	public HttpResult doDelete(String url, Map<String, String> headers, int retryTime) throws ClientProtocolException, IOException {
 		// 创建http GET请求
 		HttpDelete httpDelete = new HttpDelete(url);
 		httpDelete.setConfig(HttpClientManager.getRequestConfig());
@@ -340,7 +349,7 @@ public class HttpClientComponent {
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient().execute(httpDelete);
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpDelete);
 			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(response.getEntity(), "UTF-8"));
 		} finally {
 			if (response != null) {
@@ -356,18 +365,19 @@ public class HttpClientComponent {
 	 *  @param url
 	 *  @param params
 	 *  @param headers
+	 *  @param retryTime 重连次数
 	 *  @return
 	 *  @throws ClientProtocolException
 	 *  @throws IOException
 	 *  @throws URISyntaxException
 	 */
-	public HttpResult doDelete(String url, Map<String, String> params, Map<String, String> headers)
+	public HttpResult doDelete(String url, Map<String, String> params, Map<String, String> headers, int retryTime)
 			throws ClientProtocolException, IOException, URISyntaxException {
 		URIBuilder uriBuilder = new URIBuilder(url);
 		for (String key : params.keySet()) {
 			uriBuilder.addParameter(key, params.get(key));
 		}
-		return this.doDelete(uriBuilder.build().toString(), headers);
+		return this.doDelete(uriBuilder.build().toString(), headers, retryTime);
 	}
 	
 	/**
@@ -377,10 +387,11 @@ public class HttpClientComponent {
 	 *  @param url
 	 *  @param localFile
 	 *  @param params
+	 *  @param retryTime 重连次数 
 	 *  @return
 	 *  @throws IOException
 	 */
-	public HttpResult doUpload(String url, String uploadFile, String uploadFileName, Map<String, String> params) throws IOException{
+	public HttpResult doUpload(String url, String uploadFile, String uploadFileName, Map<String, String> params, int retryTime) throws IOException{
 		HttpPost httpPost = new HttpPost(url) ;
 		httpPost.setConfig(HttpClientManager.getRequestConfig());
 		// 把文件转换成流对象FileBody
@@ -410,7 +421,7 @@ public class HttpClientComponent {
 		HttpEntity resEntity = null ;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient().execute(httpPost);
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
 			// 获取响应对象
 			resEntity = response.getEntity();
 			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity, Charset.forName("UTF-8"))) ;
@@ -432,12 +443,13 @@ public class HttpClientComponent {
 	 *  @author zhangtian 
 	 *  @param url
 	 *  @param headers
+	 *  @param retryTime 重连次数
 	 *  @param remoteFileName
 	 *  @param localFileName
 	 *  @return
 	 *  @throws IOException
 	 */
-	public InputStream doDownload(String url, Map<String, String> headers) throws IOException {
+	public InputStream doDownload(String url, Map<String, String> headers, int retryTime) throws IOException {
 		InputStream in = null;
 		
 		HttpGet httpGet = new HttpGet(url);
@@ -455,7 +467,7 @@ public class HttpClientComponent {
 		}
 		
 		try {
-			HttpResponse httpResponse = HttpClientManager.createCloseableHttpClient().execute(httpGet);
+			HttpResponse httpResponse = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpGet);
 			HttpEntity httpEntity = httpResponse.getEntity();
 			in = httpEntity.getContent();
 			
