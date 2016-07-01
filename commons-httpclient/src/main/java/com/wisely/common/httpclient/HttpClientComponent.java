@@ -476,21 +476,15 @@ public class HttpClientComponent {
 			}
 		}
 		
-		try {
-			HttpResponse httpResponse = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpGet);
-			HttpEntity httpEntity = httpResponse.getEntity();
-			in = httpEntity.getContent();
-			
-			long length = httpEntity.getContentLength();
-			if (length <= 0) {
-				throw new RuntimeException("文件不存在......") ;
-			}
-			
-			return in;
-		} finally {
-			if(in != null) {
-				in.close();
-			}
+		HttpResponse httpResponse = HttpClientManager.createCloseableHttpClient(requestType , retryTime).execute(httpGet);
+		HttpEntity httpEntity = httpResponse.getEntity();
+		in = httpEntity.getContent();
+		
+		long length = httpEntity.getContentLength();
+		if (length <= 0) {
+			throw new RuntimeException("文件不存在......") ;
 		}
+		
+		return in;
 	}
 }

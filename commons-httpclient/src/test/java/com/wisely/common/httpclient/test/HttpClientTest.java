@@ -1,9 +1,14 @@
 package com.wisely.common.httpclient.test;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Test;
@@ -113,5 +118,14 @@ public class HttpClientTest {
 		String url = "https://github.com/" ;
 		HttpResult httpResult = HttpClientComponent.getInstance(RequestType.HTTPS).doGet(url, null, 0) ;
 		System.out.println(httpResult);
+	}
+	
+	// 文件下载测试，读取文件流
+	@Test
+	public void testDownloadFile() throws IOException {
+		String url = "http://docs.ebdoor.com/Image/CompanyCertificate/17/170609.jpg" ;
+		InputStream in = HttpClientComponent.getInstance(RequestType.HTTP).doDownload(url, null, 0) ;
+		OutputStream out = new FileOutputStream(new File("C:\\Users\\zhangtian\\Desktop\\zz.jpg")) ;
+		IOUtils.copy(in, out, 1024) ;
 	}
 }
