@@ -16,19 +16,18 @@ import org.junit.Test;
 import com.alibaba.fastjson.JSONObject;
 import com.wisely.common.httpclient.HttpClientComponent;
 import com.wisely.common.httpclient.HttpClientManager;
-import com.wisely.common.httpclient.constant.RequestType;
 import com.wisely.common.httpclient.model.HttpResult;
 
 public class HttpClientTest {
 
 	@Test
 	public void testProperties() {
-		CloseableHttpClient httpClient = HttpClientManager.createCloseableHttpClient(RequestType.HTTPS, 0) ;
+		CloseableHttpClient httpClient = HttpClientManager.createCloseableHttpClient(0) ;
 		System.out.println(httpClient);
 	}
 	
 	public static void main(String[] args) {
-		HttpClientComponent.getInstance(RequestType.HTTP) ;
+		HttpClientComponent.getInstance() ;
 	}
 	
 	@Test
@@ -43,7 +42,7 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance(RequestType.HTTP).doGet(url, params, null,0) ;
+		HttpResult result = HttpClientComponent.getInstance().doGet(url, params, null,0) ;
 		System.out.println(result);
 	}
 	
@@ -59,7 +58,7 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance(RequestType.HTTP).doPost(url,params, null,0) ;
+		HttpResult result = HttpClientComponent.getInstance().doPost(url,params, null,0) ;
 		System.out.println(result);
 	}
 	
@@ -75,7 +74,7 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance(RequestType.HTTP).doPostJson(url,JSONObject.toJSONString(params), null,0) ;
+		HttpResult result = HttpClientComponent.getInstance().doPostJson(url,JSONObject.toJSONString(params), null,0) ;
 		System.out.println(result);
 	}
 	
@@ -91,7 +90,7 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance(RequestType.HTTP).doDelete(url, params, null,0) ;
+		HttpResult result = HttpClientComponent.getInstance().doDelete(url, params, null,0) ;
 		System.out.println(result);
 	}
 	
@@ -108,15 +107,15 @@ public class HttpClientTest {
 		params.put("username", "金鸡湖") ;
 		params.put("age", "22") ;
 		
-		HttpResult result = HttpClientComponent.getInstance(RequestType.HTTP).doPut(url, params, null,0) ;
+		HttpResult result = HttpClientComponent.getInstance().doPut(url, params, null,0) ;
 		System.out.println(result);
 	}
 	
 	// 测试https连接
 	@Test
 	public void testDoGetHttps() throws ClientProtocolException, IOException {
-		String url = "https://github.com/" ;
-		HttpResult httpResult = HttpClientComponent.getInstance(RequestType.HTTPS).doGet(url, null, 0) ;
+		String url = "https://127.0.0.1:8443/DemoServer/demo" ;
+		HttpResult httpResult = HttpClientComponent.getInstance().doGet(url, null, 0) ;
 		System.out.println(httpResult);
 	}
 	
@@ -124,7 +123,7 @@ public class HttpClientTest {
 	@Test
 	public void testDownloadFile() throws IOException {
 		String url = "http://docs.ebdoor.com/Image/CompanyCertificate/17/170609.jpg" ;
-		InputStream in = HttpClientComponent.getInstance(RequestType.HTTP).doDownload(url, null, 0) ;
+		InputStream in = HttpClientComponent.getInstance().doDownload(url, null, 0) ;
 		OutputStream out = new FileOutputStream(new File("C:\\Users\\zhangtian\\Desktop\\zz.jpg")) ;
 		IOUtils.copy(in, out, 1024) ;
 	}

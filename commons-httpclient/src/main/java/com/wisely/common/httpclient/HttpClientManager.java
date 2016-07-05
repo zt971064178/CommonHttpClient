@@ -21,7 +21,11 @@ import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
@@ -31,7 +35,6 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 
-import com.wisely.common.httpclient.constant.RequestType;
 import com.wisely.common.httpclient.loader.PropertyLoader;
 import com.wisely.common.httpclient.model.HttpClientProperties;  
 
@@ -44,11 +47,18 @@ import com.wisely.common.httpclient.model.HttpClientProperties;
 public class HttpClientManager {
 	// 属性文件
 	private static HttpClientProperties httpClientProperties = null ;
-	public static final PoolingHttpClientConnectionManager httpClientConnectionManager = new PoolingHttpClientConnectionManager() ;
+	public static final PoolingHttpClientConnectionManager httpClientConnectionManager ;
 	
 	static {
 		httpClientProperties = (HttpClientProperties) PropertyLoader.loadProperty(HttpClientProperties.class) ;
 		
+	    // 设置协议http和https对应的处理socket链接工厂的对象  
+        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()  
+           .register("http", PlainConnectionSocketFactory.INSTANCE)  
+           .register("https", createSSLConnSocketFactory())
+           .build();
+        
+        httpClientConnectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry) ;
 		// 连接池配置
 		if(httpClientProperties.getMaxTotal() != 0) {
 			httpClientConnectionManager.setMaxTotal(httpClientProperties.getMaxTotal());
@@ -73,14 +83,14 @@ public class HttpClientManager {
 	 *  @author zhangtian 
 	 *  @return
 	 */
-	private static final HttpClientBuilder getHttpClientBuilder(RequestType requestType, int retryTime) {
+	private static final HttpClientBuilder getHttpClientBuilder(int retryTime) {
 		HttpClientBuilder httpClientBuilder = HttpClientBuilder.create() ;
 		httpClientBuilder.setConnectionManager(httpClientConnectionManager) ;
 		// 是否开启断线重连开关
 		if(httpClientProperties.isRetryConnection() && retryTime > 0) {
 			httpClientBuilder.setRetryHandler(retryHttpRequestRetryHandler(retryTime)) ;
 		}
-		return RequestType.HTTP.equals(requestType) ? httpClientBuilder : httpClientBuilder.setSSLSocketFactory(createSSLConnSocketFactory()) ;
+		return httpClientBuilder ;
 	}
 	
 	/**
@@ -90,8 +100,8 @@ public class HttpClientManager {
 	 *  @author zhangtian 
 	 *  @return
 	 */
-	public static final CloseableHttpClient createCloseableHttpClient(RequestType requestType, int retryTime) {
-		return getHttpClientBuilder(requestType, retryTime).build() ;
+	public static final CloseableHttpClient createCloseableHttpClient(int retryTime) {
+		return getHttpClientBuilder(retryTime).build() ;
 	}
 	
 	private static final Builder getBuilder() {
@@ -172,7 +182,7 @@ public class HttpClientManager {
      * 创建SSL安全连接 
      * @return 
      */  
-	private static SSLConnectionSocketFactory createSSLConnSocketFactory() {
+	private static SSLConnectionSocketFactory createSSLConnSocketFactory1() {
 		SSLConnectionSocketFactory sslsf = null; 
 		try {
 			// 忽略证书认证
@@ -195,7 +205,7 @@ public class HttpClientManager {
      * 创建SSL安全连接 
      * @return 
      */  
-	private static SSLConnectionSocketFactory createSSLConnSocketFactory1() {
+	private static SSLConnectionSocketFactory createSSLConnSocketFactory() {
 		// 私密连接工厂
 		SSLConnectionSocketFactory sslsf = null; 
 		// 忽略证书认证
