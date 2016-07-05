@@ -26,7 +26,6 @@ public class IdleConnectionEvictor {
 		executorService.execute(new Runnable() {
 			@Override
 			public void run() {
-				System.out.println("清除连接...");
 				try {
 					while (!shutdown) {
 						synchronized (this) {
@@ -45,6 +44,7 @@ public class IdleConnectionEvictor {
 
 	public void shutdown() {
 		shutdown = true;
+		executorService.shutdown();
 		synchronized (this) {
 			notifyAll();
 		}

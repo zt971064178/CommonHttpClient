@@ -36,9 +36,11 @@ import com.wisely.common.httpclient.model.HttpResult;
  */
 public class HttpClientComponent {
 	
+	private IdleConnectionEvictor connectionEvictor = new IdleConnectionEvictor(HttpClientManager.httpClientConnectionManager) ;
 	private HttpClientComponent() {
 		// 初试加载启动线程，清除无效链接
-		new IdleConnectionEvictor(HttpClientManager.httpClientConnectionManager).executeClearIdleConnection() ;
+		connectionEvictor.executeClearIdleConnection() ;
+		connectionEvictor.shutdown();
 	}
 	
 	// 静态内部类创建单例  线程安全
