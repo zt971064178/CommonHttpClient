@@ -2,6 +2,7 @@ package com.wisely.common.httpclient;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.http.conn.HttpClientConnectionManager;
 
@@ -29,12 +30,15 @@ public class IdleConnectionEvictor {
 				try {
 					while (!shutdown) {
 						synchronized (this) {
-							wait(5000);
+							wait(1000);
 							// 关闭失效的连接
+							System.out.println("进入....");
 							connMgr.closeExpiredConnections();
+							connMgr.closeIdleConnections(30, TimeUnit.SECONDS);
 						}
 					}
 				} catch (InterruptedException ex) {
+					shutdown() ;
 					// 结束
 					ex.printStackTrace();
 				}
@@ -43,6 +47,7 @@ public class IdleConnectionEvictor {
 	}
 
 	public void shutdown() {
+		System.out.println("shutdown");
 		shutdown = true;
 		executorService.shutdown();
 		synchronized (this) {
