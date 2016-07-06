@@ -16,7 +16,6 @@ import org.junit.Test;
 import com.alibaba.fastjson.JSONObject;
 import com.wisely.common.httpclient.HttpClientComponent;
 import com.wisely.common.httpclient.HttpClientManager;
-import com.wisely.common.httpclient.IdleConnectionEvictor;
 import com.wisely.common.httpclient.model.HttpResult;
 
 public class HttpClientTest {
@@ -28,16 +27,7 @@ public class HttpClientTest {
 	}
 	
 	public static void main(String[] args) {
-		IdleConnectionEvictor connectionEvictor = new IdleConnectionEvictor(HttpClientManager.httpClientConnectionManager) ;
-		connectionEvictor.executeClearIdleConnection();
 		HttpClientComponent.getInstance() ;
-		
-		try {
-			Thread.sleep(6000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		connectionEvictor.shutdown();
 	}
 	
 	@Test

@@ -20,6 +20,7 @@ public class IdleConnectionEvictor {
 
 	public IdleConnectionEvictor(HttpClientConnectionManager connMgr) {
 		this.connMgr = connMgr;
+		executeClearIdleConnection();
 	}
 	
 	public void executeClearIdleConnection() {
@@ -31,8 +32,8 @@ public class IdleConnectionEvictor {
 					while (!shutdown) {
 						synchronized (this) {
 							wait(1000);
+							System.out.println("Start...");
 							// 关闭失效的连接
-							System.out.println("进入....");
 							connMgr.closeExpiredConnections();
 							connMgr.closeIdleConnections(30, TimeUnit.SECONDS);
 						}
@@ -47,7 +48,6 @@ public class IdleConnectionEvictor {
 	}
 
 	public void shutdown() {
-		System.out.println("shutdown");
 		shutdown = true;
 		executorService.shutdown();
 		synchronized (this) {

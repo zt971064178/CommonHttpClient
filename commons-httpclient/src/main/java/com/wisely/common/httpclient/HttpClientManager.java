@@ -182,6 +182,7 @@ public class HttpClientManager {
      * 创建SSL安全连接 
      * @return 
      */  
+	@SuppressWarnings("unused")
 	private static SSLConnectionSocketFactory createSSLConnSocketFactory1() {
 		SSLConnectionSocketFactory sslsf = null; 
 		try {

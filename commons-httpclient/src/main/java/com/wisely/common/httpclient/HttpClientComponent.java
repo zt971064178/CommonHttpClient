@@ -43,6 +43,8 @@ public class HttpClientComponent {
 	// 静态内部类创建单例  线程安全
 	private static class SingletonHolder {
 		private final static HttpClientComponent INSTANCE = new HttpClientComponent();
+		@SuppressWarnings("unused")
+		private final static IdleConnectionEvictor EVICTOR = new IdleConnectionEvictor(HttpClientManager.httpClientConnectionManager);
 	}
 	
 	// 获取实例
