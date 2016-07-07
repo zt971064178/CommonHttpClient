@@ -395,11 +395,12 @@ public class HttpClientComponent {
 	}
 	
 	/**
-	 *  doUpload:(文件上传). 
+	 *  doUpload:(文件上传,支持所有类型). 
 	 *  @return_type:HttpResult
 	 *  @author zhangtian 
 	 *  @param url
 	 *  @param localFile
+	 *  @param uploadFileName 该参数为文件名，传入时相当于修改了原始文件名，修改时需要加入文件名后缀
 	 *  @param params
 	 *  @param retryTime 重连次数 
 	 *  @return
@@ -424,6 +425,7 @@ public class HttpClientComponent {
 		if(params != null) {
 			for(Map.Entry<String, String> par : params.entrySet()) {
 				// 相当于<input type="text" name="userName" value=userName>
+				System.out.println(par);
 				multipartEntityBuilder.addPart(par.getKey(), new StringBody(par.getValue(), ContentType.MULTIPART_FORM_DATA)) ;
 			}
 		}
@@ -477,7 +479,11 @@ public class HttpClientComponent {
 		
 		final MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create() ;
 		multipartEntityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE) ;
-		multipartEntityBuilder.addBinaryBody("file", file, ContentType.DEFAULT_BINARY, uploadFileName);
+		if(uploadFileName == null || "".equals(uploadFileName)) {
+			multipartEntityBuilder.addBinaryBody("file", file) ;
+		} else {
+			multipartEntityBuilder.addBinaryBody("file", file, ContentType.DEFAULT_BINARY, uploadFileName);
+		}
 		
 		if(params != null) {
 			for(Map.Entry<String, String> par : params.entrySet()) {
@@ -518,7 +524,7 @@ public class HttpClientComponent {
 	}
 	
 	/**
-	 *  doUpload:(文件上传). 
+	 *  doUpload:(文件上传--文件流传输). 
 	 *  @return_type:HttpResult
 	 *  @author zhangtian 
 	 *  @param url
@@ -534,11 +540,15 @@ public class HttpClientComponent {
 		
 		final MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create() ;
 		multipartEntityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE) ;
-		multipartEntityBuilder.addBinaryBody("file", in, ContentType.create("application/zip"), uploadFileName);
+		if(uploadFileName == null || "".equals(uploadFileName)) {
+			// 服务端必须以流的形式接受上传的文件
+			multipartEntityBuilder.addBinaryBody("file", in);
+		}else {
+			multipartEntityBuilder.addBinaryBody("file", in, ContentType.create("application/zip"), uploadFileName);
+		}
 		
 		if(params != null) {
 			for(Map.Entry<String, String> par : params.entrySet()) {
-				// 相当于<input type="text" name="userName" value=userName>
 				multipartEntityBuilder.addTextBody(par.getKey(), par.getValue(), ContentType.TEXT_PLAIN) ;
 			}
 		}
@@ -567,6 +577,10 @@ public class HttpClientComponent {
 				response.close();
 			}
 			
+			if(in != null) {
+				in.close();
+			}
+			
 			// 销毁
 			if(resEntity != null) {
 				EntityUtils.consume(resEntity);
@@ -575,7 +589,7 @@ public class HttpClientComponent {
 	}
 	
 	/**
-	 *  doUpload:(文件上传). 
+	 *  doUpload:(文件上传--字节数组传输). 
 	 *  @return_type:HttpResult
 	 *  @author zhangtian 
 	 *  @param url
@@ -591,11 +605,15 @@ public class HttpClientComponent {
 		
 		final MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create() ;
 		multipartEntityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE) ;
-		multipartEntityBuilder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, uploadFileName);
+		// 服务端必须以字节数组的形式接受上传的文件
+		if(uploadFileName == null || "".equals(uploadFileName)) {
+			multipartEntityBuilder.addBinaryBody("file", bytes);
+		}else {
+			multipartEntityBuilder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, uploadFileName);
+		}
 		
 		if(params != null) {
 			for(Map.Entry<String, String> par : params.entrySet()) {
-				// 相当于<input type="text" name="userName" value=userName>
 				multipartEntityBuilder.addTextBody(par.getKey(), par.getValue(), ContentType.TEXT_PLAIN) ;
 			}
 		}

@@ -1,12 +1,15 @@
 package com.wisely.common.httpclient.test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.ClientProtocolException;
@@ -126,5 +129,41 @@ public class HttpClientTest {
 		InputStream in = HttpClientComponent.getInstance().doDownload(url, null, 0) ;
 		OutputStream out = new FileOutputStream(new File("C:\\Users\\zhangtian\\Desktop\\zz.jpg")) ;
 		IOUtils.copy(in, out, 1024) ;
+	}
+	
+	@Test
+	public void testDoUploadAddPart() throws IOException {
+		String url = "http://127.0.0.1:8080/uploadFile.do" ;
+		String filePath = "C:\\Users\\zhangtian\\Desktop\\W020160705330799637089.jpg" ;
+		Map<String, String> params = new HashMap<String, String>() ;
+		params.put("elId", UUID.randomUUID().toString()) ;
+		params.put("zzlx", URLEncoder.encode("中文测试","UTF-8")) ;
+		
+		HttpResult httpResult = HttpClientComponent.getInstance().doUploadAddPart(url, filePath, "", params, 0) ;
+		System.out.println(httpResult);
+	}
+
+	@Test
+	public void testDoUploadTextPart() throws IOException {
+		String url = "http://127.0.0.1:8080/uploadFile.do" ;
+		String filePath = "C:\\Users\\zhangtian\\Desktop\\W020160705330799637089.jpg" ;
+		Map<String, String> params = new HashMap<String, String>() ;
+		params.put("elId", UUID.randomUUID().toString()) ;
+		params.put("zzlx", URLEncoder.encode("中文测试","UTF-8")) ;
+		
+		HttpResult httpResult = HttpClientComponent.getInstance().doUploadTextPart(url, filePath, null, params, 0) ;
+		System.out.println(httpResult);
+	}
+	
+	@Test
+	public void testDoUploadFileAndInputStreamandText() throws IOException {
+		String url = "http://127.0.0.1:8080/uploadFile.do" ;
+		String filePath = "C:\\Users\\zhangtian\\Desktop\\W020160705330799637089.jpg" ;
+		Map<String, String> params = new HashMap<String, String>() ;
+		params.put("elId", UUID.randomUUID().toString()) ;
+		params.put("zzlx", URLEncoder.encode("中文测试","UTF-8")) ;
+		
+		HttpResult httpResult = HttpClientComponent.getInstance().doUploadFileAndInputStreamandText(url, new FileInputStream(new File(filePath)), null, params, 0) ;
+		System.out.println(httpResult);
 	}
 }
