@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -23,6 +22,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
@@ -72,7 +72,7 @@ public class HttpClientComponent {
 				httpGet.setHeader(header.getKey(), header.getValue());
 			}
 		}
-
+		
 		CloseableHttpResponse response = null;
 		try {
 			// 执行请求
@@ -405,37 +405,217 @@ public class HttpClientComponent {
 	 *  @return
 	 *  @throws IOException
 	 */
-	public HttpResult doUpload(String url, String uploadFile, String uploadFileName, Map<String, String> params, int retryTime) throws IOException{
+	public HttpResult doUploadAddPart(String url, String uploadFile, String uploadFileName, Map<String, String> params, int retryTime) throws IOException{
 		HttpPost httpPost = new HttpPost(url) ;
 		httpPost.setConfig(HttpClientManager.getRequestConfig());
 		// 把文件转换成流对象FileBody
 		FileBody fileBody = null ;
 		if(uploadFileName == null || "".equals(uploadFileName)) {
-			fileBody = new FileBody(new File(uploadFile), ContentType.MULTIPART_FORM_DATA) ;
+			fileBody = new FileBody(new File(uploadFile), ContentType.DEFAULT_BINARY) ;
 		} else {
-			fileBody = new FileBody(new File(uploadFile), ContentType.MULTIPART_FORM_DATA, uploadFileName) ;
+			fileBody = new FileBody(new File(uploadFile), ContentType.DEFAULT_BINARY, uploadFileName) ;
 		}
 		
 		MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create() ;
+		multipartEntityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE) ;
 		// 相当于<input type="file" name="file"/>
 		multipartEntityBuilder.addPart("file", fileBody) ;
 		
 		if(params != null) {
 			for(Map.Entry<String, String> par : params.entrySet()) {
 				// 相当于<input type="text" name="userName" value=userName>
-				multipartEntityBuilder.addPart(par.getKey(), new StringBody(par.getValue(), ContentType.create("text/plain", Consts.UTF_8))) ;
+				multipartEntityBuilder.addPart(par.getKey(), new StringBody(par.getValue(), ContentType.MULTIPART_FORM_DATA)) ;
 			}
 		}
 		HttpEntity httpEntity = multipartEntityBuilder.build() ;
 		
-		httpPost.setEntity(httpEntity);
+		// 进度条控制
+		final ProgressEntityWrapper.ProgressListener pListener = new ProgressEntityWrapper.ProgressListener() {
+            @Override
+            public void progress(final float percentage) {
+            	System.out.println(Float.compare(percentage, 100) > 0);
+            }
+		};
+		httpPost.setEntity(new ProgressEntityWrapper(httpEntity, pListener));
 		
 		// 发起请求 并返回请求的响应
 		CloseableHttpResponse response = null;
 		HttpEntity resEntity = null ;
 		try {
 			// 执行请求
-			response = HttpClientManager.createCloseableHttpClient( retryTime).execute(httpPost);
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
+			// 获取响应对象
+			resEntity = response.getEntity();
+			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity, Charset.forName("UTF-8"))) ;
+		} finally {
+			if (response != null) {
+				response.close();
+			}
+			
+			// 销毁
+			if(resEntity != null) {
+				EntityUtils.consume(resEntity);
+			}
+		}
+	}
+	
+	/**
+	 *  doUpload:(文件上传). 
+	 *  @return_type:HttpResult
+	 *  @author zhangtian 
+	 *  @param url
+	 *  @param localFile
+	 *  @param params
+	 *  @param retryTime 重连次数 
+	 *  @return
+	 *  @throws IOException
+	 */
+	public HttpResult doUploadTextPart(String url, String uploadFile, String uploadFileName, Map<String, String> params, int retryTime) throws IOException{
+		HttpPost httpPost = new HttpPost(url) ;
+		httpPost.setConfig(HttpClientManager.getRequestConfig());
+		final File file = new File(uploadFile);
+		
+		final MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create() ;
+		multipartEntityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE) ;
+		multipartEntityBuilder.addBinaryBody("file", file, ContentType.DEFAULT_BINARY, uploadFileName);
+		
+		if(params != null) {
+			for(Map.Entry<String, String> par : params.entrySet()) {
+				// 相当于<input type="text" name="userName" value=userName>
+				multipartEntityBuilder.addTextBody(par.getKey(), par.getValue(), ContentType.DEFAULT_BINARY) ;
+			}
+		}
+		final HttpEntity httpEntity = multipartEntityBuilder.build() ;
+		
+		// 进度条控制
+		final ProgressEntityWrapper.ProgressListener pListener = new ProgressEntityWrapper.ProgressListener() {
+            @Override
+            public void progress(final float percentage) {
+            	System.out.println(Float.compare(percentage, 100) > 0);
+            }
+		};
+		httpPost.setEntity(new ProgressEntityWrapper(httpEntity, pListener));
+		
+		// 发起请求 并返回请求的响应
+		CloseableHttpResponse response = null;
+		HttpEntity resEntity = null ;
+		try {
+			// 执行请求
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
+			// 获取响应对象
+			resEntity = response.getEntity();
+			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity, Charset.forName("UTF-8"))) ;
+		} finally {
+			if (response != null) {
+				response.close();
+			}
+			
+			// 销毁
+			if(resEntity != null) {
+				EntityUtils.consume(resEntity);
+			}
+		}
+	}
+	
+	/**
+	 *  doUpload:(文件上传). 
+	 *  @return_type:HttpResult
+	 *  @author zhangtian 
+	 *  @param url
+	 *  @param localFile
+	 *  @param params
+	 *  @param retryTime 重连次数 
+	 *  @return
+	 *  @throws IOException
+	 */
+	public HttpResult doUploadFileAndInputStreamandText(String url, InputStream in, String uploadFileName, Map<String, String> params, int retryTime) throws IOException{
+		HttpPost httpPost = new HttpPost(url) ;
+		httpPost.setConfig(HttpClientManager.getRequestConfig());
+		
+		final MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create() ;
+		multipartEntityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE) ;
+		multipartEntityBuilder.addBinaryBody("file", in, ContentType.create("application/zip"), uploadFileName);
+		
+		if(params != null) {
+			for(Map.Entry<String, String> par : params.entrySet()) {
+				// 相当于<input type="text" name="userName" value=userName>
+				multipartEntityBuilder.addTextBody(par.getKey(), par.getValue(), ContentType.TEXT_PLAIN) ;
+			}
+		}
+		final HttpEntity httpEntity = multipartEntityBuilder.build() ;
+		
+		// 进度条控制
+		final ProgressEntityWrapper.ProgressListener pListener = new ProgressEntityWrapper.ProgressListener() {
+            @Override
+            public void progress(final float percentage) {
+            	System.out.println(Float.compare(percentage, 100) > 0);
+            }
+		};
+		httpPost.setEntity(new ProgressEntityWrapper(httpEntity, pListener));
+		
+		// 发起请求 并返回请求的响应
+		CloseableHttpResponse response = null;
+		HttpEntity resEntity = null ;
+		try {
+			// 执行请求
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
+			// 获取响应对象
+			resEntity = response.getEntity();
+			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity, Charset.forName("UTF-8"))) ;
+		} finally {
+			if (response != null) {
+				response.close();
+			}
+			
+			// 销毁
+			if(resEntity != null) {
+				EntityUtils.consume(resEntity);
+			}
+		}
+	}
+	
+	/**
+	 *  doUpload:(文件上传). 
+	 *  @return_type:HttpResult
+	 *  @author zhangtian 
+	 *  @param url
+	 *  @param localFile
+	 *  @param params
+	 *  @param retryTime 重连次数 
+	 *  @return
+	 *  @throws IOException
+	 */
+	public HttpResult doUploadCharArrayandText(String url, byte[] bytes, String uploadFileName, Map<String, String> params, int retryTime) throws IOException{
+		HttpPost httpPost = new HttpPost(url) ;
+		httpPost.setConfig(HttpClientManager.getRequestConfig());
+		
+		final MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create() ;
+		multipartEntityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE) ;
+		multipartEntityBuilder.addBinaryBody("file", bytes, ContentType.DEFAULT_BINARY, uploadFileName);
+		
+		if(params != null) {
+			for(Map.Entry<String, String> par : params.entrySet()) {
+				// 相当于<input type="text" name="userName" value=userName>
+				multipartEntityBuilder.addTextBody(par.getKey(), par.getValue(), ContentType.TEXT_PLAIN) ;
+			}
+		}
+		final HttpEntity httpEntity = multipartEntityBuilder.build() ;
+		
+		// 进度条控制
+		final ProgressEntityWrapper.ProgressListener pListener = new ProgressEntityWrapper.ProgressListener() {
+            @Override
+            public void progress(final float percentage) {
+            	System.out.println(Float.compare(percentage, 100) > 0);
+            }
+		};
+		httpPost.setEntity(new ProgressEntityWrapper(httpEntity, pListener));
+		
+		// 发起请求 并返回请求的响应
+		CloseableHttpResponse response = null;
+		HttpEntity resEntity = null ;
+		try {
+			// 执行请求
+			response = HttpClientManager.createCloseableHttpClient(retryTime).execute(httpPost);
 			// 获取响应对象
 			resEntity = response.getEntity();
 			return new HttpResult(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity, Charset.forName("UTF-8"))) ;
