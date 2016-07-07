@@ -31,8 +31,7 @@ public class IdleConnectionEvictor {
 				try {
 					while (!shutdown) {
 						synchronized (this) {
-							wait(1000);
-							System.out.println("Start...");
+							wait(5000);
 							// 关闭失效的连接
 							connMgr.closeExpiredConnections();
 							connMgr.closeIdleConnections(30, TimeUnit.SECONDS);

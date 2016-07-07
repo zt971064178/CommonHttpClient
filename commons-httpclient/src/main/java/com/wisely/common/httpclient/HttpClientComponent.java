@@ -124,8 +124,20 @@ public class HttpClientComponent {
 				httpPost.setHeader(header.getKey(), header.getValue());
 				//httpPost.setHeader("Authorization", "Bearer "+token);
 				//httpPost.setHeader("Accept", "application/json");
+				// httpPost.setHeader("Cookie", "JSESSIONID=1234");// 设置Cookie
 			}
 		}
+		
+		/*// 设置Cookie
+		final BasicCookieStore cookieStore = new BasicCookieStore();
+        final BasicClientCookie cookie = new BasicClientCookie("JSESSIONID", "1234");
+        cookie.setDomain(".github.com");
+        cookie.setPath("/");
+        cookieStore.addCookie(cookie);
+        final HttpContext localContext = new BasicHttpContext();
+        localContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore);
+        // localContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore); // before 4.3
+        response = HttpClientManager.createCloseableHttpClient( retryTime).execute(httpPost, localContext);*/
 		
 		if (params != null) {
 			// 设置2个post参数，一个是scope、一个是q
